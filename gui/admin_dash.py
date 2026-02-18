@@ -3,6 +3,8 @@ from tkinter import ttk, messagebox
 from database.user_queries import get_all_users
 from database.policy_queries import get_all_policies, add_policy
 from database.claim_queries import get_all_claims, update_claim_status
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 def open_admin_dashboard(admin_id):
@@ -24,6 +26,68 @@ def open_admin_dashboard(admin_id):
 
         pending = sum(1 for c in claims if c[4] == "Pending")
         pending_claims_label.config(text="⏳  Pending: {}".format(pending))
+        
+    def show_charts():
+        claims = get_all_claims()
+        users = get_all_users()
+        policies = get_all_policies()
+
+        approved = sum(1 for c in claims if c[4] == "Approved")
+        rejected = sum(1 for c in claims if c[4] == "Rejected")
+        pending  = sum(1 for c in claims if c[4] == "Pending")
+
+        chart_win = tk.Toplevel(root)
+        chart_win.title("System Statistics")
+        chart_win.geometry("900x500")
+        chart_win.configure(bg="#0f1117")
+
+        tk.Frame(chart_win, bg="#4f8ef7", height=4).pack(fill="x")
+        tk.Label(chart_win, text="System Statistics",
+                 bg="#0f1117", fg="white",
+                 font=("Helvetica", 13, "bold")).pack(pady=(15, 5))
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+        fig.patch.set_facecolor("#0f1117")
+
+        # ── Bar Chart ──
+        ax1.set_facecolor("#1a1d27")
+        categories = ["Users", "Policies", "Claims"]
+        values     = [len(users), len(policies), len(claims)]
+        colors     = ["#7ec8e3", "#b5e48c", "#f4a261"]
+        bars = ax1.bar(categories, values, color=colors, width=0.5)
+        ax1.set_title("System Overview", color="white", pad=10)
+        ax1.tick_params(colors="white")
+        ax1.spines["bottom"].set_color("#2e3250")
+        ax1.spines["left"].set_color("#2e3250")
+        ax1.spines["top"].set_visible(False)
+        ax1.spines["right"].set_visible(False)
+        for bar, val in zip(bars, values):
+            ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
+                     str(val), ha="center", va="bottom", color="white", fontsize=10)
+
+        # ── Line Dot Chart ──
+        ax2.set_facecolor("#1a1d27")
+        claim_labels  = ["Approved", "Rejected", "Pending"]
+        claim_values  = [approved, rejected, pending]
+        claim_colors  = ["lightgreen", "#ff6b6b", "orange"]
+        ax2.plot(claim_labels, claim_values,
+                 color="#4f8ef7", linewidth=2, zorder=1)
+        for i, (lbl, val, col) in enumerate(zip(claim_labels, claim_values, claim_colors)):
+            ax2.scatter(i, val, color=col, s=100, zorder=2)
+            ax2.text(i, val + 0.1, str(val),
+                     ha="center", va="bottom", color="white", fontsize=10)
+        ax2.set_title("Claims Breakdown", color="white", pad=10)
+        ax2.tick_params(colors="white")
+        ax2.spines["bottom"].set_color("#2e3250")
+        ax2.spines["left"].set_color("#2e3250")
+        ax2.spines["top"].set_visible(False)
+        ax2.spines["right"].set_visible(False)
+
+        plt.tight_layout(pad=2)
+
+        canvas = FigureCanvasTkAgg(fig, master=chart_win)
+        canvas.draw()
+        canvas.get_tk_widget().pack(expand=True, fill="both", padx=15, pady=10)
 
     def populate_table(columns, data):
         clear_table()
@@ -264,6 +328,10 @@ def open_admin_dashboard(admin_id):
 
     ttk.Button(sidebar, text="📁   View Claims",
                command=show_claims,
+               style="Sidebar.TButton").pack(fill="x", pady=2, padx=10)
+
+    ttk.Button(sidebar, text="📊   View Statistics",
+               command=show_charts,
                style="Sidebar.TButton").pack(fill="x", pady=2, padx=10)
 
     tk.Frame(sidebar, bg="#1e2130", height=1).pack(fill="x", padx=15, pady=10)
