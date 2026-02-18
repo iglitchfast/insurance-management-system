@@ -1,0 +1,48 @@
+QUERIES
+
+CREATE DATABASE insurance_management_system;
+
+USE insurance_management_system;
+
+CREATE TABLE USERS (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    role VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE USER_POLICIES (
+    purchase_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    policy_id INT NOT NULL,
+    start_date DATE,
+
+    FOREIGN KEY (user_id) 
+        REFERENCES USERS(user_id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (policy_id) 
+        REFERENCES POLICIES(policy_id)
+        ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE POLICIES (
+    policy_id INT AUTO_INCREMENT PRIMARY KEY,
+    policy_name VARCHAR(100) NOT NULL,
+    base_premium DECIMAL(10,2) NOT NULL
+);
+
+
+CREATE TABLE CLAIMS (
+    claim_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_policy_id INT NOT NULL,
+    amount DECIMAL(10,2),
+    status VARCHAR(50),
+
+    FOREIGN KEY (user_policy_id) 
+        REFERENCES USER_POLICIES(purchase_id)
+        ON DELETE CASCADE
+);
+
